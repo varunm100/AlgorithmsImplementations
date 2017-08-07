@@ -4,20 +4,23 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
+#include <unordered_map>
+#include <string>
 
 using namespace std;
 
-vector<int> _CountComb;
-vector<int> AllCombs;
-vector<int> VectorAllCombs;
+vector<long long int> _CountComb;
+vector<long long int> AllCombs;
+vector<long long int> VectorAllCombs;
+unordered_map<string, long long int> AllDisMap;
 
-int TotalNumlCombs = 0;
-int PrimePoss = 1;
+long long int TotalNumlCombs = 0;
+long long int PrimePoss = 0;
 
 struct AdjListNode
 {
-    int dest;
-    int weight;
+    long long int dest;
+    long long int weight;
     struct AdjListNode* next;
 };
  
@@ -28,11 +31,11 @@ struct AdjList
 
 struct Graph
 {
-    int V;
+    long long int V;
     struct AdjList* array;
 };
  
-struct AdjListNode* newAdjListNode(int dest, int weight)
+struct AdjListNode* newAdjListNode(long long int dest, long long int weight)
 {
     struct AdjListNode* newNode =
             (struct AdjListNode*) malloc(sizeof(struct AdjListNode));
@@ -42,20 +45,20 @@ struct AdjListNode* newAdjListNode(int dest, int weight)
     return newNode;
 }
  
-struct Graph* createGraph(int V)
+struct Graph* createGraph(long long int V)
 {
     struct Graph* graph = (struct Graph*) malloc(sizeof(struct Graph));
     graph->V = V;
  
     graph->array = (struct AdjList*) malloc(V * sizeof(struct AdjList));
  
-    for (int i = 0; i < V; ++i)
+    for (long long int i = 0; i < V; ++i)
         graph->array[i].head = NULL;
  
     return graph;
 }
  
-void addEdge(struct Graph* graph, int src, int dest, int weight)
+void addEdge(struct Graph* graph, long long int src, long long int dest, long long int weight)
 {
     struct AdjListNode* newNode = newAdjListNode(dest, weight);
     newNode->next = graph->array[src].head;
@@ -67,19 +70,19 @@ void addEdge(struct Graph* graph, int src, int dest, int weight)
  
 struct MinHeapNode
 {
-    int  v;
-    int dist;
+    long long int  v;
+    long long int dist;
 };
  
 struct MinHeap
 {
-    int size;
-    int capacity;
-    int *pos;
+    long long int size;
+    long long int capacity;
+    long long int *pos;
     struct MinHeapNode **array;
 };
 
-struct MinHeapNode* newMinHeapNode(int v, int dist)
+struct MinHeapNode* newMinHeapNode(long long int v, long long int dist)
 {
     struct MinHeapNode* minHeapNode =
            (struct MinHeapNode*) malloc(sizeof(struct MinHeapNode));
@@ -88,11 +91,11 @@ struct MinHeapNode* newMinHeapNode(int v, int dist)
     return minHeapNode;
 }
 
-struct MinHeap* createMinHeap(int capacity)
+struct MinHeap* createMinHeap(long long int capacity)
 {
     struct MinHeap* minHeap =
          (struct MinHeap*) malloc(sizeof(struct MinHeap));
-    minHeap->pos = (int *)malloc(capacity * sizeof(int));
+    minHeap->pos = (long long int *)malloc(capacity * sizeof(long long int));
     minHeap->size = 0;
     minHeap->capacity = capacity;
     minHeap->array =
@@ -107,9 +110,9 @@ void swapMinHeapNode(struct MinHeapNode** a, struct MinHeapNode** b)
     *b = t;
 }
  
-void minHeapify(struct MinHeap* minHeap, int idx)
+void minHeapify(struct MinHeap* minHeap, long long int idx)
 {
-    int smallest, left, right;
+    long long int smallest, left, right;
     smallest = idx;
     left = 2 * idx + 1;
     right = 2 * idx + 2;
@@ -133,7 +136,7 @@ void minHeapify(struct MinHeap* minHeap, int idx)
         minHeapify(minHeap, smallest);
     }
 }
-int isEmpty(struct MinHeap* minHeap)
+long long int isEmpty(struct MinHeap* minHeap)
 {
     return minHeap->size == 0;
 }
@@ -152,9 +155,9 @@ struct MinHeapNode* extractMin(struct MinHeap* minHeap)
     return root;
 }
 
-void decreaseKey(struct MinHeap* minHeap, int v, int dist)
+void decreaseKey(struct MinHeap* minHeap, long long int v, long long int dist)
 {
-    int i = minHeap->pos[v];
+    long long int i = minHeap->pos[v];
     minHeap->array[i]->dist = dist;
     while (i && minHeap->array[i]->dist < minHeap->array[(i - 1) / 2]->dist)
     {
@@ -165,37 +168,38 @@ void decreaseKey(struct MinHeap* minHeap, int v, int dist)
     }
 }
  
-bool isInMinHeap(struct MinHeap *minHeap, int v)
+bool isInMinHeap(struct MinHeap *minHeap, long long int v)
 {
    if (minHeap->pos[v] < minHeap->size)
      return true;
    return false;
 }
 
-bool CheckValueExsistsVec(int _vInput[], int CheckVal) {
-    /*for (int i = 0; i < _vInput.size(); i++) {
-        if (_vInput[i] == CheckVal) {
-            return true;
+void printArr(long long int dist[], long long int n)
+{
+    string EncodedDis;
+    string EncodedDisRev;
+    for (long long int i = 1; i < n; ++i) {
+        EncodedDis = "";
+        EncodedDis = to_string(dist[1]) + to_string(i);
+        EncodedDisRev = "";
+        EncodedDisRev = to_string(i) + to_string(dist[1]);
+        if (AllDisMap.count(EncodedDis) <= 0 && AllDisMap.count(EncodedDisRev) <= 0) {
+            if (to_string(dist[1]) == to_string(i)) {
+                AllDisMap.emplace(EncodedDis, 0);
+            } else {
+                AllDisMap.emplace(EncodedDis, dist[i]+1);
+            }
         }
-    }*/
-    return false;
+    }
 }
 
-void printArr(int dist[], int n)
+void dijkstra(struct Graph* graph, long long int src)
 {
-    cout << dist[0] << endl;
-    cout << dist[1] << endl;
-    printf("Vertex   Distance from Source\n");
-    for (int i = 1; i < n; ++i)
-        printf("%d \t\t %d\n", i, dist[i]);
-}
-
-void dijkstra(struct Graph* graph, int src)
-{
-    int V = graph->V;
-    int dist[V];
+    long long int V = graph->V;
+    long long int dist[V];
     struct MinHeap* minHeap = createMinHeap(V);
-    for (int v = 0; v < V; ++v)
+    for (long long int v = 0; v < V; ++v)
     {
         dist[v] = INT_MAX;
         minHeap->array[v] = newMinHeapNode(v, dist[v]);
@@ -206,14 +210,13 @@ void dijkstra(struct Graph* graph, int src)
     dist[src] = 0;
     decreaseKey(minHeap, src, dist[src]);
     minHeap->size = V;
-    while (!isEmpty(minHeap))
-    {
+    while (!isEmpty(minHeap)) {
         struct MinHeapNode* minHeapNode = extractMin(minHeap);
-        int u = minHeapNode->v;
+        long long int u = minHeapNode->v;
         struct AdjListNode* pCrawl = graph->array[u].head;
         while (pCrawl != NULL)
         {
-            int v = pCrawl->dest;
+            long long int v = pCrawl->dest;
             if (isInMinHeap(minHeap, v) && dist[u] != INT_MAX && 
                                           pCrawl->weight + dist[u] < dist[v])
             {
@@ -226,7 +229,7 @@ void dijkstra(struct Graph* graph, int src)
     printArr(dist, V);
 }
 
-bool isPrime(int n) {
+bool isPrime(long long int n) {
     if (n <= 1)  {
         return false;
     }
@@ -234,7 +237,7 @@ bool isPrime(int n) {
         return true;
     }
     if (n%2 == 0 || n%3 == 0) return false;
-    for (int i=5; i*i<=n; i=i+6){
+    for (long long int i=5; i*i<=n; i=i+6){
         if (n%i == 0 || n%(i+2) == 0){
            return false;
         }
@@ -242,52 +245,66 @@ bool isPrime(int n) {
     return true;
 }
 
-void AddToCounter(vector<int>& v) {
-    TotalNumlCombs++;
-    int Num = abs(v[0]-v[1]);
-    if (isPrime(Num)) {
-        PrimePoss++;
+void AddToCounter(vector<long long int>& v) {
+    string _FinalString = "";
+    string _FinalStringRev = "";
+    if (v.size() >= 2) {
+        long long int num = 0;
+        TotalNumlCombs++;
+        _FinalString = to_string(v[0]) + to_string(v[1]);
+        _FinalStringRev = to_string(v[1]) + to_string(v[2]);
+        if (AllDisMap.count(_FinalString) > 0) {
+            num = AllDisMap[_FinalString];
+            num = abs(num);
+        } else if (AllDisMap.count(_FinalStringRev) > 0) {
+            num = AllDisMap[_FinalStringRev];
+            num = abs(num);
+        }
+        if (isPrime(num)) {
+            PrimePoss++;
+        }
     }
 }
 
-void CalcAllCombs(int offset, int k) {
+void CalcAllCombs(long long int offset, long long int k) {
     if (k == 0) {
         AddToCounter(AllCombs);
         return;
     }
-    for (int i = offset; i <= _CountComb.size() - k; ++i) {
+    for (long long int i = offset; i <= _CountComb.size() - k; ++i) {
         AllCombs.push_back(_CountComb[i]);
         CalcAllCombs(i+1, k-1);
         AllCombs.pop_back();
     }
 }
 
+
 int main() {
-    int n, k = 2;
+    long long int n, k = 2;
     cin >> n;
-    for (int i = 0; i < n; ++i) { _CountComb.push_back(i+1); }
-    CalcAllCombs(0, k);
-    if (PrimePoss == 1) {
-        PrimePoss = 0;
-    }
-    int counter = 0;
-    int counter1 = 0;
-    struct Graph* MainGraph = createGraph(n+1);
+    if (n > 2) {
+        long long int counter = 0;
+        long long int counter1 = 0;
+        struct Graph* MainGraph = createGraph(n+1);
 
-    for (int i = 0; i < n-1;i++) {
-        counter = 0;
-        counter1 = 0;
-        cin >> counter >> counter1;
-        addEdge(MainGraph, counter, counter1, 1);
-    }
+        for (long long int i = 0; i < n-1;i++) {
+            counter = 0;
+            counter1 = 0;
+            cin >> counter >> counter1;
+            addEdge(MainGraph, min(counter,counter1), max(counter, counter1), 1);
+        }
 
-    for (int i = 1; i < n+1; i++) {
-        dijkstra(MainGraph, i);
+        for (long long int i = 1; i < n+1; i++) {
+            dijkstra(MainGraph, i);
+        }
+
+        for (long long int i = 0; i < n; ++i) { _CountComb.push_back(i+1); }
+        CalcAllCombs(0, k);
+
+        float FinalVal = (float)PrimePoss/(float)TotalNumlCombs;
+        cout << FinalVal << endl;
+    } else {
+        cout << 0 << endl;
     }
-    /*float FinalVal = (float)PrimePoss/(float)TotalNumlCombs;
-    cout << FinalVal << endl;
-    node *CounterNode = new node(a,i);
-    Graph.push_back(*CounterNode);
-    delete CounterNode;*/
     return 0;
 }

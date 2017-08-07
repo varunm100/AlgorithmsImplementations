@@ -41,7 +41,7 @@ void GenerateGraph(vector<string> _grid, int _pacman_c, int _pacman_r, int _c) {
             //node CounterNode(a,i);
             node *CounterNode = new node(a,i);
             Graph.push_back(*CounterNode);
-            delete CounterNode;
+            delete CounterNode
             if (isValid(a+1, i, _grid, _grid.size(), _grid[i].length())) {
                 node *CounterNode = new node(a+1,i);
                 Graph.back().AdjNode.push_back(*CounterNode);
